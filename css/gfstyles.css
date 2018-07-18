@@ -1,0 +1,83 @@
+.button {
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+	-webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.3s;
+    cursor: pointer;
+}
+
+.logisticButton{
+	background-color: #A9A9A9;
+	border-radius: 0px;
+	border: none;
+	color: white;
+    padding: 4px 8px;
+	font-size: 32px;
+    margin: 6px 2px;
+}
+
+.logisticButtonDisabled{
+	border-radius: 10px;
+	opacity: 0.6;
+}
+
+.logisticButton:hover{
+	background-color: #808080;
+}
+
+.calculateButton{
+	background-color: #B0C4DE;
+	border-radius: 8px;
+	border: 1px solid #ccc;
+	color: black;
+    padding: 2px 4px;
+	font-size: 20px;
+    margin: 6px 2px;
+}
+
+.calculateButton:hover{
+	background-color: #6f93c3;
+}
+
+.wieghtInput{
+	text-align: center;
+	padding: 2px 2px;
+	margin: 8px 0;
+	box-sizing: border-box;
+	width: 60px;
+}
+
+.wieghtInput:focus {
+    background-color: #E0FFFF;
+}
+
+table#LogTable{
+	border-collapse: collapse;
+}
+
+table#LogTable td{
+	border-bottom: 1px solid #ddd;
+}
+
+table#CTable{
+	border-collapse: collapse;
+}
+
+table#CTable th, table#CTable td{
+	padding: 8px;
+	border-bottom: 1px solid #ddd;
+	text-align: center;
+}
+
+table#CTable th{
+	border-top: 1px solid #ddd;
+}
+
+table#CTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+table#CTable tr:nth-child(odd) {
+   background-color: #ffffff;
+}
+
