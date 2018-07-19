@@ -40,7 +40,7 @@
 	background-color: #6f93c3;
 }
 
-.wieghtInput{
+.weightInput{
 	text-align: center;
 	padding: 2px 2px;
 	margin: 8px 0;
@@ -48,7 +48,7 @@
 	width: 60px;
 }
 
-.wieghtInput:focus {
+.weightInput:focus {
     background-color: #E0FFFF;
 }
 

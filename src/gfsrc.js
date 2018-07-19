@@ -1,11 +1,20 @@
+// Main Variables
 var logisticChapters = [true, true, true, true, true, true, true, false, false, false, false]; 
+
+const resourceLength = 10;
+var combinationLength = 10;
+var amountOfLogisitcMissions = 4;
+
 var logisticMissionList = []
 var logisticMissionListParsed = []
 var logisticMissionCombinations = []
-
 var logisticMissionsMaxResources = []
 
 var weightInputs = []
+
+// Speeds stuff
+var previousLogChapters = []
+var cTable = null;
 
 window.onload = function(){
 	// Create logistic Chapter toggle buttons
@@ -19,24 +28,28 @@ window.onload = function(){
 	document.getElementById('Logistic_Table').appendChild(table);
 	
 	// Get weight inputs
-	document.getElementById('WInput').cells[0].addEventListener('click', parseLogisticMissionList)
-	weightInputs.push(document.getElementById('ManpowerInput'));
-	weightInputs.push(document.getElementById('AmmoInput'));
-	weightInputs.push(document.getElementById('RationInput'));
-	weightInputs.push(document.getElementById('PartsInput'));
-	weightInputs.push(document.getElementById('TotalResourcesInput'));
-	weightInputs.push(document.getElementById('TDollInput'));
-	weightInputs.push(document.getElementById('EquipmentInput'));
-	weightInputs.push(document.getElementById('QuickProductionInput'));
-	weightInputs.push(document.getElementById('QuickRepairInput'));
-	weightInputs.push(document.getElementById('TokenInput'));
+	var WInput = document.getElementById('WInput');
+	WInput.cells[0].addEventListener('click', mainParser)
+	weightInputs = WInput.getElementsByClassName('weightInput');
 	
-	// Create
+	// Get main table
+	cTable = document.getElementById('CTable');
+	
+	// Create initial Mission List
 	createLogisticMissionList();
-	createLogisticMissionCombination();
 	
 	// Parse
-	parseLogisticMissionList();
+	mainParser();
+}
+
+// Logistic Mission Combination Sorter (internal)
+function mainParser(){
+	// Create the list and combinations
+	parseLogisticMissionListAndCombination();
+	
+	// Sort and create rows
+	sortLogisticMissionCombinations(createWeights());
+	refreshLogisticMissionCombinationTable(cTable, logisticMissionCombinations);
 }
 
 // Logistic Chapters Selection (->html)
@@ -44,15 +57,15 @@ function createLogisticChapterElement(mainRow, logisticID){
 	var td = document.createElement('td');
 	
 	// Set div and its attributes
-	var but = document.createElement('button');
+	var buttonElement = document.createElement('button');
 	if (logisticChapters[logisticID])
-		but.className = 'button logisticButton';
+		buttonElement.className = 'button logisticButton';
 	else
-		but.className = 'button logisticButton logisticButtonDisabled';
-	but.textContent = parseLogisticID(logisticID);
-	but.addEventListener('click', onLogisticChapterClick);
+		buttonElement.className = 'button logisticButton logisticButtonDisabled';
+	buttonElement.textContent = parseLogisticID(logisticID);
+	buttonElement.addEventListener('click', onLogisticChapterClick);
 	
-	td.appendChild(but);
+	td.appendChild(buttonElement);
 	mainRow.appendChild(td);
 }
 
@@ -71,7 +84,7 @@ function parseLogisticID(ID){
 	return ID;
 }
 
-// Logistic Mission and Parser (internal)
+// Logistic Mission Creation (internal)
 function createLogisticMissionList(){
 	// There is probably a much smarter method but give me a break
 	logisticMissionList = []
@@ -122,9 +135,25 @@ function createSingleLogisticM(id, time, manpower, ammo, ration, parts,
 			tdoll, equipment, quickproduction, quickrepair, token]}
 }
 
-function parseLogisticMissionList(){
-	logisticMissionListParsed = []
+// Logistic Mission Parser (internal)
+function parseLogisticMissionListAndCombination(){
+	// Check if Log Chapter Sequence hasn't changed
+	// If not, no need to change combination
+	if (previousLogChapters.length == logisticChapters.length){
+		var isEqual = true;
+		for(var p = 0; p < logisticChapters.length; p++){
+			if (previousLogChapters[p] ^ logisticChapters[p]){
+				isEqual = false;
+				break;
+			}
+		}
+		if (isEqual)
+			return;
+	}
+	previousLogChapters = logisticChapters.slice(0);
 	
+	// Create new Parsed List
+	logisticMissionListParsed = []
 	for(var i = 0; i < logisticChapters.length; i++){
 		if (logisticChapters[i]){
 			if (logisticMissionList[i * 4] == undefined)
@@ -136,18 +165,16 @@ function parseLogisticMissionList(){
 		}
 	}
 	
-	console.log(logisticMissionListParsed);
-	
-	getCombinations(4);
+	// Create new combinations and max resources lists
+	getCombinations(amountOfLogisitcMissions);
 	getLogisticMissionMaxResources();
-	sortLogisticMissionCombinations(createWeights());
-	fillLogisticMissionCombinations(document.getElementById('CTable'), 10);
 }
 
 function parseSingleLogisticM(logMission){
 	return {id: logMission.id, resources: logMission.resources.map(function(data) {return data / logMission.time})}
 }
 
+// Create combinations
 function getCombinations(){
 	logisticMissionCombinations = []
 	combinationUntil(logisticMissionListParsed, 4, logisticMissionListParsed.length, logisticMissionCombinations, 0, [], 0)
@@ -172,9 +199,9 @@ function createCombination(data){
 			, resources: sumofArrays(data.map(function (dat) {return dat.resources}))}
 }
 
+// Add combination's values into one 
 function sumofArrays(data){
-	
-	array = Array(data[0].length).fill(0);
+	array = Array(resourceLength).fill(0);
 	for(var i = 0; i < data.length; i++){
 		for (var j = 0; j < data[i].length; j++){
 			array[j] += data[i][j];
@@ -183,25 +210,49 @@ function sumofArrays(data){
 	return array;
 }
 
-// Logistic Mission Combinations (->html)
-function createLogisticMissionCombination(){
-	var table = document.getElementById('CTable');
-	for(var i = 0; i < 10; i++){
-		createLogisticMissionCombinationRow(table);
+// Get max resources for sort
+function getLogisticMissionMaxResources(){
+	logisticMissionsMaxResources = []
+	for(var i = 0; i < resourceLength; i++){
+		logisticMissionsMaxResources.push(-Infinity);
+	}
+	
+	var len = logisticMissionCombinations.length;
+	while (len--){
+		for(var i = 0; i < logisticMissionsMaxResources.length; i++){
+			if (logisticMissionCombinations[len].resources[i] > logisticMissionsMaxResources[i]){
+				logisticMissionsMaxResources[i] = logisticMissionCombinations[len].resources[i];
+			}
+		}
 	}
 }
 
-function createLogisticMissionCombinationRow(table){
+// Logistic Mission Combinations (->html)
+function refreshLogisticMissionCombinationTable(table, data){
+	// Remove all rows
+	while(table.rows.length > 2)
+		table.removeChild(table.rows[2]);
+	
+	// Create new rows
+	for(var i = 0; i < combinationLength && i < data.length; i++){
+		createLogisticMissionCombinationRow(table, data[i]);
+	}
+}
+
+function createLogisticMissionCombinationRow(table, data){
 	var tr = document.createElement('tr');
-	createLogisticMissionCombinationColumn(tr);
-	for (var i = 0; i < 10; i++)
-		createLogisticMissionCombinationColumn(tr);
+	createLogisticMissionCombinationColumn(tr, data.combination);
+	for (var i = 0; i < data.resources.length; i++)
+		createLogisticMissionCombinationColumn(tr, data.resources[i]);
 	table.appendChild(tr);
 }
 
 function createLogisticMissionCombinationColumn(row, data){
 	var td = document.createElement('td');
-	td.textContent = "";
+	if (isNaN(data))
+		td.textContent = data;
+	else
+		td.textContent = parseData(parseFloat(data));
 	row.appendChild(td);
 }
 
@@ -220,7 +271,21 @@ function fillLogisticMissionCombinations(table, combinationLength){
 	}
 }
 
-// Sort
+// Sort (internal)
+function sortLogisticMissionCombinations(weights){
+	logisticMissionCombinations.sort(function(a,b) {
+		var value = 0;
+		for(var i = 0; i < weights.length; i++){
+			value += (b.resources[weights[i].index] - a.resources[weights[i].index])
+					* weights[i].weight / logisticMissionsMaxResources[weights[i].index]
+		}
+		if (value == 0)
+			return b.resources[4] - a.resources[4];
+		
+		return value;
+	})
+}
+
 // Weights = [ [resourceIndex, weight] ]
 function createWeights(){
 	weights = []
@@ -239,32 +304,3 @@ function createWeight(index, weight){
 	return {index: index, weight: weight}
 }
 
-function getLogisticMissionMaxResources(){
-	logisticMissionsMaxResources = []
-	for(var i = 0; i < logisticMissionCombinations[0].resources.length; i++){
-		logisticMissionsMaxResources.push(-Infinity);
-	}
-	
-	var len = logisticMissionCombinations.length;
-	while (len--){
-		for(var i = 0; i < logisticMissionsMaxResources.length; i++){
-			if (logisticMissionCombinations[len].resources[i] > logisticMissionsMaxResources[i]){
-				logisticMissionsMaxResources[i] = logisticMissionCombinations[len].resources[i];
-			}
-		}
-	}
-}
-
-function sortLogisticMissionCombinations(weights){
-	if (weights.length == 0)
-		weights.push(createWeight(4, 1));
-	
-	logisticMissionCombinations.sort(function(a,b) {
-		var value = 0;
-		for(var i = 0; i < weights.length; i++){
-			value += (b.resources[weights[i].index] - a.resources[weights[i].index])
-					* weights[i].weight / logisticMissionsMaxResources[weights[i].index]
-		}
-		return value;
-	})
-}
