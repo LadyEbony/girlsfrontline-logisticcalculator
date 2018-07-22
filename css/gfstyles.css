@@ -12,13 +12,13 @@
 	border-radius: 0px;
 	border: none;
 	color: white;
-    padding: 4px 8px;
-	font-size: 32px;
-    margin: 6px 2px;
+    padding: 10% 10%;
+	font-size: 250%;
+    margin: 2px 8px;
 }
 
 .logisticButtonDisabled{
-	border-radius: 10px;
+	border-radius: 25%;
 	opacity: 0.6;
 }
 
@@ -53,6 +53,7 @@
 }
 
 table#LogTable{
+	font-size: 16px;
 	border-collapse: collapse;
 }
 
@@ -61,6 +62,7 @@ table#LogTable td{
 }
 
 table#CTable{
+	font-size: 16x;
 	border-collapse: collapse;
 }
 
